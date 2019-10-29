@@ -58,75 +58,89 @@ int main(void)
 
     	  	//IWDG_ReloadCounter();
 
-    	   while(code[0]==0)
-    	   {//выполняем пока не найден ключ
-    	      	   	   lcd_set_rect(3,0,84*2,1);
+    	   while(keys!=2)
+    	   {
+
+
+    	      	   	   lcd_set_strs(1,3,8,"*****ID******",0);//
     	      	   	   if(Reset_USART_DS18B20())
     	         		{//забираем память
     	         		Get_Rom_USART_DS18B20(code);
 
     	         		SRC = chek_crc(code,7);
-    	         		if(code[7]!=SRC){lcd_set_strs(3,0,16,"   ERROR  ",0); BIP(150,300);delay_ms(1000);code[0]=0x00; break;}
-    	         		    	         		    	         		//_sprtffd(0,buf, code[7]);
-    	         		for(u8 i=0;i<8;i++){_sprtf16(data,code[i]); buf[i*2]= data[0];
+    	         		if(code[7]!=SRC){lcd_set_strs(3,0,16," ERROR_CRC ",0); BIP(150,300);delay_s(1); code[0]=0;break;}
+
+    	         		for(u8 i=0;i<7;i++){_sprtf16(data,code[i]); buf[i*2]= data[0];
     	         						buf[i*2+1]= data[1];
     	         						buf[i*2+2]= 0;}
 
-    	         		lcd_set_strs(3,0,8,buf,0);
+    	         		lcd_set_strs(2,0,8,buf,0);
 
+    	         		_sprtf16(buf,code[7]);// пишем отдельно контрольную сумму
+    	         		lcd_set_strs(3,0,8,"   SRS <  >    ",0);
+    	         		lcd_set_strs(3,48,8,buf,0);
+    	         		BIP(150,300);
     	         		}
-    	         		else {lcd_set_strs(3,0,8,"КЛЮЧ НЕ НАЙДЕН ",0);
-    	         		delay_ms(400); }
+
+
 
 
     	      	   	switch ( code[0] ) {
     	      	   	case 0x01:     lcd_set_strs(0,0,8,"1990,2401,2411",0); break; //собщение
     	      	   	case 0x02:     lcd_set_strs(0,0,8,"     DS1991    ",0); break;//собщение
     	      	   	case 0x04:	   lcd_set_strs(0,0,8," DS1994 DS2404  ",0); break;
-    	      	   	default:  lcd_set_strs(3,0,8,"КЛЮЧ НЕ НАЙДЕН ",0);	break;
+    	      	   	default:  	   lcd_set_rect(4,0,84,1); lcd_set_strs(3,0,8,"КЛЮЧ НЕ НАЙДЕН",0);	break;
+
     	      	   						}
-    	      	  	  	lcd_set_strs(2,3,8,"*****ID******",0);//
-    	      	  	 if(code[0]>0x00){lcd_set_strs(5,18,8,"ЗАПИСАТЬ",0); BIP(150,300);delay_ms(400);}
 
+    	      	  	 if(code[0]>0x00){lcd_set_strs(5,18,8,"ЗАПИСАТЬ",0); delay_ms(400);
+    	      	  	 }
+
+    	      	  	 key_st(10);
     	   }
-
 
     	         	if(keys==2)	{L=1;}
 
     	         	while(L && code[0]==0x01)
-    	         	{key_st(10);lcd_set_strs(5,18,8,"ОТМЕНИТЬ",0);
-
-
+    	         	{
+    	         		key_st(10); lcd_set_strs(5,18,8,"ОТМЕНИТЬ",0);
 
     	         		if(Reset_USART_DS18B20())
-    	         		{	message("*              ", 0);
+    	         		{
+    	         			lcd_set_rect(3,0,84*2,1);
+    	         			progress (3,10);
     	         			Get_Rom_USART_DS18B20(code1);
-    	         			if(!chek_code(code, code1)){message("КОД СУЩЕСТВУЕТ", 0); delay_s(3); break;}
-
+    	         			if(!chek_code(code, code1)){message("КОД СУЩЕСТВУЕТ", 0); delay_s(1);}
+    	         			else
+    	         			{
 
     	         	if(Reset_USART_DS18B20())
-    	         	{  message("***            ", 0);
+    	         	{
+    	         		progress (3,20);
     	         		Write_USART_DS18B20(0xD1); //разрешить запись
     	         		Write_bit_USART_DS18B20(0);
-    	         		 delay_ms(16);}
+    	         		 delay_ms(15);}
     	         	else {message("    ERRORS 2   ", 0); break;}
 
     	         	if(Reset_USART_DS18B20())
-    	       	{   message("*****          ", 0);
-    	         		Write_USART_DS18B20(0x1E); //разрешить запись
+    	       	{
+    	         		progress (3,30);
+    	         		Write_USART_DS18B20(0x1E);
     	         	  d =	Read_bits_USART_DS18B20(1);
-    	         _sprtf16(buf,d);lcd_set_strs(3,0,8,buf,0);delay_ms(15);}
+    	         	 delay_ms(15);}
     	         	else {message("    ERRORS 3   ", 0); break;}
 
     	         	if(Reset_USART_DS18B20())
-    	         			{message("*******        ", 0);
+    	         			{
+    	         		progress (3,40);
     	         		Write_USART_DS18B20(0xD5);
     	         			prog_USART_byts(code);
     	         			delay_ms(10);}
     	         	else {message("    ERRORS 4   ", 0); break;}
 
     	         		if(Reset_USART_DS18B20())
-    	         			{message("*********      ", 0);
+    	         			{
+    	         			progress (3,50);
 
     	         			Write_USART_DS18B20(0xD1);
     	         			Write_bit_USART_DS18B20(1);
@@ -134,25 +148,23 @@ int main(void)
     	         	else {message("    ERRORS 5   ", 0); break;}
 
     	         			Get_Rom_USART_DS18B20(code1);
-    	         			message("***********    ", 0);
-    	         		for(u8 i=0;i<8;i++){_sprtf16(data,code1[i]); buf[i*2]= data[0];
-    	         		    	         						buf[i*2+1]= data[1];
-    	         		    	         						buf[i*2+2]= 0;}
 
-    	         		    	         		lcd_set_strs(3,0,8,buf,0);
+    	         			progress (3,61);
 
+    	         			if(chek_code(code, code1)){message("ОШИБКА ЗАПИСИ ", 0);delay_s(2);}
 
-    	         			if(chek_code(code, code1)){message(" ОШИБКА ЗАПИСИ", 0);delay_s(3); break;}
-    	         			else {message("**************", 0);delay_ms(500);
+    	         			else {
 
-    	         				message("     ГОТОВ     ",0); delay_s(1);
-    	         			message(" УБЕРИТЕ КЛЮЧ ",0);delay_s(5); break;}
+    	         				progress (3,72);
 
-    	         			//if(SRC = chek_crc(code,7)){}
-    	         			//else {lcd_set_strs(3,5,8,"ОШИБКА ЗАПИСИ",0); delay_ms(500);L==0;}
+    	         				message("     ГОТОВ    ",0); delay_s(1);
+    	         			message(" УБЕРИТЕ КЛЮЧ ",0);delay_s(2); }
 
-    	         		}else {lcd_set_rect(3,0,84*2,1);
-    	         			lcd_set_strs(3,3,8,"ВСТАВЬТЕ КЛЮЧ",0);  delay_ms(1000);L==0;}
+    	         			}
+    	         		}
+    	         		else {lcd_set_rect(3,0,84*2,1);
+    	         			lcd_set_strs(3,3,8,"ВСТАВЬТЕ КЛЮЧ",0); delay_s(1);}
+
     	         		if(keys==2)	{L=0;code[0]=0; lcd_clear();}
     	         	}
 
@@ -176,6 +188,20 @@ int main(void)
  void  message(unsigned char *buf, u8 i)//i нвертирование
  {
 	 lcd_set_rect(3,0,84*2,1);
-	 lcd_set_strs(3,0,8,buf,i); BIP(150,300); delay_ms(1000);L==0;
+	 lcd_set_strs(3,0,8,buf,i); BIP(150,300); delay_s(1);L==0;
+ }
+
+ void progress (u8 y,u8 p)//р прогресс 0-66
+
+ {
+	 lcd_set_strs(y,0,8,"[",0);
+	 lcd_set_strs(y,78,8,"]",0);
+
+	 if(p>72){p=72;}
+
+	 lcd_set_rect(y,6,p,0);
+
+	 BIP(150,300);delay_ms(300);
+
  }
 

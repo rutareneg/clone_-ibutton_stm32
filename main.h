@@ -203,3 +203,4 @@ typedef struct
 		void T_eng(u8 y,u8 x, u8 h,u8 c);
 
 //********************************************//
+		 void progress (u8 y,u8 p);
